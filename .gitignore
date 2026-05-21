@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables — never commit these
+.env
+.env.local
+.env.*.local
+server/.env
+
+# Build output
+dist/
+build/
+
+# Uploaded files (local disk storage)
+server/uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tooling
+.claude/
