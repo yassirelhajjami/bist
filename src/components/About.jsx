@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 
 const icons = [
@@ -10,6 +11,26 @@ const icons = [
 export default function About() {
   const { t } = useLanguage()
   const a = t.about
+  const [content, setContent] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/content/about')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.data) setContent(d.data) })
+      .catch(() => {})
+  }, [])
+
+  const c = content || {}
+  const p1 = c.p1 || a.p1
+  const p2 = c.p2 || a.p2
+  const missionTitle = c.mission_title || a.missionTitle
+  const missionText  = c.mission_text  || a.missionText
+  const values = [
+    { title: c.value_1_title || a.values[0]?.title, desc: c.value_1_desc || a.values[0]?.desc },
+    { title: c.value_2_title || a.values[1]?.title, desc: c.value_2_desc || a.values[1]?.desc },
+    { title: c.value_3_title || a.values[2]?.title, desc: c.value_3_desc || a.values[2]?.desc },
+    { title: c.value_4_title || a.values[3]?.title, desc: c.value_4_desc || a.values[3]?.desc },
+  ]
 
   return (
     <section id="apropos" className="section-padding bg-white">
@@ -20,8 +41,8 @@ export default function About() {
             <h2 className="section-title mb-6">
               {a.title} <em className="not-italic text-crimson-600">{a.titleEm}</em> {a.titleEnd}
             </h2>
-            <p className="text-gray-600 leading-relaxed mb-6">{a.p1}</p>
-            <p className="text-gray-600 leading-relaxed mb-8">{a.p2}</p>
+            <p className="text-gray-600 leading-relaxed mb-6">{p1}</p>
+            <p className="text-gray-600 leading-relaxed mb-8">{p2}</p>
             <a href="#niveaux" className="btn-outline">
               {a.cta}
               <svg className="w-4 h-4 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,8 +61,8 @@ export default function About() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
-                <h3 className="font-heading text-2xl mb-3">{a.missionTitle}</h3>
-                <p className="text-white/70 leading-relaxed mb-6">{a.missionText}</p>
+                <h3 className="font-heading text-2xl mb-3">{missionTitle}</h3>
+                <p className="text-white/70 leading-relaxed mb-6">{missionText}</p>
                 <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/10">
                   <div>
                     <p className="font-heading text-3xl font-bold text-crimson-400">100%</p>
@@ -69,7 +90,7 @@ export default function About() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {a.values.map((v, i) => (
+          {values.map((v, i) => (
             <div key={i} className="reveal card p-6 group hover:-translate-y-1" style={{ transitionDelay: `${i * 0.1}s` }}>
               <div className="w-12 h-12 bg-navy-50 group-hover:bg-navy-900 rounded-2xl flex items-center justify-center mb-4 text-navy-700 group-hover:text-white transition-all duration-300">
                 {icons[i]}

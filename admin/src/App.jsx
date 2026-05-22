@@ -16,6 +16,9 @@ import StaffList from './pages/Staff/StaffList'
 import StaffForm from './pages/Staff/StaffForm'
 import SettingsPage from './pages/Settings/SettingsPage'
 import SubmissionsList from './pages/Submissions/SubmissionsList'
+import AboutEditor from './pages/About/AboutEditor'
+import TeachingEditor from './pages/Teaching/TeachingEditor'
+import LevelsEditor from './pages/Levels/LevelsEditor'
 import Spinner from './components/UI/Spinner'
 
 function PrivateRoute({ children }) {
@@ -50,6 +53,9 @@ function AppRoutes() {
         <Route path="staff/:id/edit" element={<StaffForm />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="submissions" element={<SubmissionsList />} />
+        <Route path="about"       element={<AboutEditor />} />
+        <Route path="teaching"    element={<TeachingEditor />} />
+        <Route path="levels"      element={<LevelsEditor />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -6,6 +6,7 @@ export default function StatCard({ label, value, icon, color = 'navy', sub, tren
     amber:   { bg: 'bg-amber-500',   text: 'text-amber-600',   light: 'bg-amber-50' },
     blue:    { bg: 'bg-blue-600',    text: 'text-blue-600',    light: 'bg-blue-50' },
     purple:  { bg: 'bg-purple-600',  text: 'text-purple-600',  light: 'bg-purple-50' },
+    gray:    { bg: 'bg-slate-500',   text: 'text-slate-500',   light: 'bg-slate-50' },
   }
   const c = colors[color] || colors.navy
 

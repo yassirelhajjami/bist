@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 
 const levelConfig = [
@@ -14,6 +15,26 @@ const levelConfig = [
 export default function Levels() {
   const { t } = useLanguage()
   const l = t.levels
+  const [content, setContent] = useState(null)
+
+  useEffect(() => {
+    fetch('/api/content/levels')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.data) setContent(d.data) })
+      .catch(() => {})
+  }, [])
+
+  const c = content || {}
+  const subtitle = c.section_subtitle || l.subtitle
+  const levelIds = ['maternelle', 'primaire', 'college', 'lycee']
+  const apiLevels = levelIds.map((id, i) => ({
+    name:        c[`${id}_name`]     || l.items[i]?.name,
+    ages:        c[`${id}_ages`]     || l.items[i]?.ages,
+    description: c[`${id}_desc`]     || l.items[i]?.description,
+    features:    c[`${id}_features`]
+      ? c[`${id}_features`].split('\n').filter(Boolean)
+      : l.items[i]?.features,
+  }))
 
   return (
     <section id="niveaux" className="section-padding bg-gray-50">
@@ -23,11 +44,11 @@ export default function Levels() {
           <h2 className="section-title mx-auto">
             {l.title} <em className="not-italic text-crimson-600">{l.titleEm}</em>
           </h2>
-          <p className="section-subtitle mx-auto text-center mt-4">{l.subtitle}</p>
+          <p className="section-subtitle mx-auto text-center mt-4">{subtitle}</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {l.items.map((level, i) => {
+          {apiLevels.map((level, i) => {
             const cfg = levelConfig[i]
             return (
               <div key={cfg.id} className="reveal card group hover:-translate-y-1 p-0 overflow-hidden" style={{ transitionDelay: `${i * 0.1}s` }}>
@@ -43,7 +64,7 @@ export default function Levels() {
                 <div className="p-6">
                   <p className="text-gray-600 leading-relaxed mb-5">{level.description}</p>
                   <ul className="space-y-2.5">
-                    {level.features.map((f, fi) => (
+                    {(level.features || []).map((f, fi) => (
                       <li key={fi} className="flex items-center gap-3 text-sm">
                         <span className={`w-5 h-5 rounded-full ${cfg.badge} flex items-center justify-center shrink-0`}>
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
