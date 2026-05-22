@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import api from '../../api/client'
+import { supabase } from '../../lib/supabase'
 import MediaUpload from '../../components/MediaUpload'
 import Spinner from '../../components/UI/Spinner'
 import { useToast } from '../../components/UI/Toast'
@@ -14,19 +14,23 @@ export default function SettingsPage() {
     { id: 'general', label: s.general  },
     { id: 'contact', label: s.contact  },
     { id: 'social',  label: s.social   },
-    { id: 'seo',     label: s.seo      },
     { id: 'account', label: s.account  },
   ]
 
   const [tab, setTab]           = useState('general')
   const [settings, setSettings] = useState(null)
+  const [settingsId, setSettingsId] = useState(null)
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
-  const [pw, setPw]             = useState({ current: '', newPw: '', confirm: '' })
+  const [pw, setPw]             = useState({ newPw: '', confirm: '' })
   const [savingPw, setSavingPw] = useState(false)
 
   useEffect(() => {
-    api.get('/settings').then(r => setSettings(r.data.data)).finally(() => setLoading(false))
+    supabase.from('settings').select('*').limit(1).single()
+      .then(({ data }) => {
+        if (data) { setSettingsId(data.id); setSettings(data) }
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   function setField(path, value) {
@@ -44,7 +48,14 @@ export default function SettingsPage() {
     e.preventDefault()
     setSaving(true)
     try {
-      await api.patch('/settings', settings)
+      if (settingsId) {
+        const { error } = await supabase.from('settings').update(settings).eq('id', settingsId)
+        if (error) throw error
+      } else {
+        const { data, error } = await supabase.from('settings').insert(settings).select().single()
+        if (error) throw error
+        setSettingsId(data.id)
+      }
       toast(t.common.success, 'success')
     } catch { toast(t.common.error, 'error') }
     finally { setSaving(false) }
@@ -56,10 +67,11 @@ export default function SettingsPage() {
     if (pw.newPw.length < 6) return toast('Minimum 6 caractères', 'error')
     setSavingPw(true)
     try {
-      await api.patch('/auth/me/password', { currentPassword: pw.current, newPassword: pw.newPw })
+      const { error } = await supabase.auth.updateUser({ password: pw.newPw })
+      if (error) throw error
       toast(t.common.success, 'success')
-      setPw({ current: '', newPw: '', confirm: '' })
-    } catch (err) { toast(err.response?.data?.message || t.common.error, 'error') }
+      setPw({ newPw: '', confirm: '' })
+    } catch (err) { toast(err.message || t.common.error, 'error') }
     finally { setSavingPw(false) }
   }
 
@@ -92,31 +104,9 @@ export default function SettingsPage() {
       {tab === 'general' && (
         <form onSubmit={save} className="card card-body space-y-5">
           <h2 className="font-semibold text-slate-800 border-b pb-3">{s.generalInfo}</h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="form-label">{s.schoolName}</label>
-              <input value={settings.schoolName || ''} onChange={e => setField('schoolName', e.target.value)} className="form-input" />
-            </div>
-            <div>
-              <label className="form-label">{s.schoolNameFull}</label>
-              <input value={settings.schoolNameFull || ''} onChange={e => setField('schoolNameFull', e.target.value)} className="form-input" />
-            </div>
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="form-label">{s.primaryColor}</label>
-              <div className="flex gap-2">
-                <input type="color" value={settings.primaryColor || '#132d79'} onChange={e => setField('primaryColor', e.target.value)} className="w-12 h-10 rounded border border-slate-200 cursor-pointer p-0.5" />
-                <input value={settings.primaryColor || ''} onChange={e => setField('primaryColor', e.target.value)} className="form-input flex-1 font-mono text-sm" placeholder="#132d79" />
-              </div>
-            </div>
-            <div>
-              <label className="form-label">{s.secondaryColor}</label>
-              <div className="flex gap-2">
-                <input type="color" value={settings.secondaryColor || '#C1273A'} onChange={e => setField('secondaryColor', e.target.value)} className="w-12 h-10 rounded border border-slate-200 cursor-pointer p-0.5" />
-                <input value={settings.secondaryColor || ''} onChange={e => setField('secondaryColor', e.target.value)} className="form-input flex-1 font-mono text-sm" placeholder="#C1273A" />
-              </div>
-            </div>
+          <div>
+            <label className="form-label">{s.schoolName}</label>
+            <input value={settings.school_name || ''} onChange={e => setField('school_name', e.target.value)} className="form-input" />
           </div>
           <MediaUpload value={settings.logo || ''} onChange={url => setField('logo', url)} subdir="images/branding" label={s.logo} helpText={s.logoHint} />
           <SaveBtn disabled={saving} />
@@ -159,30 +149,9 @@ export default function SettingsPage() {
           ].map(sn => (
             <div key={sn.key}>
               <label className="form-label">{sn.label}</label>
-              <input value={settings.socialMedia?.[sn.key] || ''} onChange={e => setField(`socialMedia.${sn.key}`, e.target.value)} className="form-input" placeholder={sn.placeholder} />
+              <input value={settings.social_media?.[sn.key] || ''} onChange={e => setField(`social_media.${sn.key}`, e.target.value)} className="form-input" placeholder={sn.placeholder} />
             </div>
           ))}
-          <SaveBtn disabled={saving} />
-        </form>
-      )}
-
-      {tab === 'seo' && (
-        <form onSubmit={save} className="card card-body space-y-4">
-          <h2 className="font-semibold text-slate-800 border-b pb-3">{s.seo}</h2>
-          <div>
-            <label className="form-label">{s.seoTitle} <span className="text-slate-400 font-normal">(70 max)</span></label>
-            <input value={settings.seo?.title || ''} onChange={e => setField('seo.title', e.target.value)} maxLength={70} className="form-input" />
-            <p className="text-xs text-slate-400 text-right mt-1">{(settings.seo?.title || '').length}/70</p>
-          </div>
-          <div>
-            <label className="form-label">{s.seoDesc} <span className="text-slate-400 font-normal">(170 max)</span></label>
-            <textarea value={settings.seo?.description || ''} onChange={e => setField('seo.description', e.target.value)} maxLength={170} rows={3} className="form-textarea" />
-            <p className="text-xs text-slate-400 text-right mt-1">{(settings.seo?.description || '').length}/170</p>
-          </div>
-          <div>
-            <label className="form-label">{s.keywords} <span className="text-slate-400 font-normal">({s.keywordsHint})</span></label>
-            <input value={settings.seo?.keywords || ''} onChange={e => setField('seo.keywords', e.target.value)} className="form-input" />
-          </div>
           <SaveBtn disabled={saving} />
         </form>
       )}
@@ -190,10 +159,6 @@ export default function SettingsPage() {
       {tab === 'account' && (
         <form onSubmit={changePassword} className="card card-body space-y-4">
           <h2 className="font-semibold text-slate-800 border-b pb-3">{s.changePassword}</h2>
-          <div>
-            <label className="form-label">{s.currentPassword}</label>
-            <input type="password" value={pw.current} onChange={e => setPw(p => ({ ...p, current: e.target.value }))} className="form-input" required />
-          </div>
           <div>
             <label className="form-label">{s.newPassword}</label>
             <input type="password" value={pw.newPw} onChange={e => setPw(p => ({ ...p, newPw: e.target.value }))} className="form-input" minLength={6} required />

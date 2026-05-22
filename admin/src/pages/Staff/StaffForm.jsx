@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import api from '../../api/client'
+import { supabase } from '../../lib/supabase'
 import MediaUpload from '../../components/MediaUpload'
 import Spinner from '../../components/UI/Spinner'
 import { useToast } from '../../components/UI/Toast'
 import { useLanguage } from '../../context/LanguageContext'
-
-const DEPTS = ['Direction', 'Maternelle', 'Primaire', 'Collège', 'Lycée', 'Administration', 'Parascolaire']
 
 export default function StaffForm() {
   const { id } = useParams()
@@ -17,20 +15,18 @@ export default function StaffForm() {
   const isEdit   = Boolean(id)
 
   const [form, setForm] = useState({
-    name: '', position: '', department: 'Administration', bio: '',
-    photo: '', email: '', phone: '', order: 0, isActive: true,
+    name: '', role: '', bio: '', photo: '', order_index: 0, is_active: true,
   })
   const [loading, setLoading]   = useState(false)
   const [fetching, setFetching] = useState(isEdit)
 
   useEffect(() => {
     if (!isEdit) return
-    api.get(`/staff/${id}`).then(r => {
-      const m = r.data.data
-      setForm({
-        name: m.name||'', position: m.position||'', department: m.department||'Administration',
-        bio: m.bio||'', photo: m.photo||'', email: m.email||'', phone: m.phone||'',
-        order: m.order||0, isActive: m.isActive,
+    supabase.from('staff').select('*').eq('id', id).single().then(({ data }) => {
+      if (data) setForm({
+        name: data.name || '', role: data.role || '',
+        bio: data.bio || '', photo: data.photo || '',
+        order_index: data.order_index || 0, is_active: data.is_active,
       })
     }).finally(() => setFetching(false))
   }, [id, isEdit])
@@ -39,14 +35,19 @@ export default function StaffForm() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    if (!form.name.trim() || !form.position.trim()) return toast(t.common.required, 'error')
+    if (!form.name.trim() || !form.role.trim()) return toast(t.common.required, 'error')
     setLoading(true)
     try {
-      if (isEdit) await api.patch(`/staff/${id}`, form)
-      else await api.post('/staff', form)
+      if (isEdit) {
+        const { error } = await supabase.from('staff').update(form).eq('id', id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase.from('staff').insert(form)
+        if (error) throw error
+      }
       toast(t.common.success, 'success')
       navigate('/staff')
-    } catch (err) { toast(err.response?.data?.message || t.common.error, 'error') }
+    } catch (err) { toast(err.message || t.common.error, 'error') }
     finally { setLoading(false) }
   }
 
@@ -76,28 +77,12 @@ export default function StaffForm() {
             </div>
             <div>
               <label className="form-label">{s.position}</label>
-              <input value={form.position} onChange={set('position')} className="form-input" required />
+              <input value={form.role} onChange={set('role')} className="form-input" required />
             </div>
-          </div>
-          <div>
-            <label className="form-label">{s.department}</label>
-            <select value={form.department} onChange={set('department')} className="form-select">
-              {DEPTS.map(d => <option key={d}>{d}</option>)}
-            </select>
           </div>
           <div>
             <label className="form-label">{s.bio}</label>
             <textarea value={form.bio} onChange={set('bio')} rows={4} className="form-textarea" />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <label className="form-label">{s.email}</label>
-              <input type="email" value={form.email} onChange={set('email')} className="form-input" />
-            </div>
-            <div>
-              <label className="form-label">{s.phone}</label>
-              <input value={form.phone} onChange={set('phone')} className="form-input" />
-            </div>
           </div>
         </div>
 
@@ -114,11 +99,11 @@ export default function StaffForm() {
           <div className="card card-body space-y-3">
             <div>
               <label className="form-label">{s.order}</label>
-              <input type="number" value={form.order} onChange={set('order')} className="form-input" min={0} />
+              <input type="number" value={form.order_index} onChange={set('order_index')} className="form-input" min={0} />
               <p className="form-error text-slate-400">{s.orderHint}</p>
             </div>
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={form.isActive} onChange={set('isActive')} className="w-4 h-4 accent-navy-700" />
+              <input type="checkbox" checked={form.is_active} onChange={set('is_active')} className="w-4 h-4 accent-navy-700" />
               <span className="text-sm font-medium text-slate-700">{s.isActive}</span>
             </label>
           </div>

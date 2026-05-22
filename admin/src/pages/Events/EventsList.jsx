@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../../api/client'
+import { supabase } from '../../lib/supabase'
 import ConfirmDialog from '../../components/UI/ConfirmDialog'
 import Spinner from '../../components/UI/Spinner'
 import { useToast } from '../../components/UI/Toast'
@@ -12,48 +12,39 @@ export default function EventsList() {
   const toast = useToast()
   const { t, lang } = useLanguage()
   const ev = t.events
-
   const STATUS_MAP = {
     upcoming:  { label: ev.upcoming,  cls: 'badge-blue'  },
     ongoing:   { label: ev.ongoing,   cls: 'badge-green' },
     past:      { label: ev.past,      cls: 'badge-gray'  },
     cancelled: { label: ev.cancelled, cls: 'badge-red'   },
   }
-
-  const [events, setEvents]   = useState([])
-  const [loading, setLoading] = useState(true)
-  const [status, setStatus]   = useState('')
+  const [events, setEvents]     = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [status, setStatus]     = useState('')
   const [deleteId, setDeleteId] = useState(null)
   const [deleting, setDeleting] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    try {
-      const params = status ? `?status=${status}` : ''
-      const { data } = await api.get(`/events${params}`)
-      setEvents(data.data)
-    } finally { setLoading(false) }
+    let q = supabase.from('events').select('*').order('start_date', { ascending: false })
+    if (status) q = q.eq('status', status)
+    const { data } = await q
+    setEvents(data || [])
+    setLoading(false)
   }, [status])
 
   useEffect(() => { load() }, [load])
 
   async function handleDelete() {
     setDeleting(true)
-    try {
-      await api.delete(`/events/${deleteId}`)
-      toast(t.common.success, 'success')
-      setDeleteId(null)
-      load()
-    } catch { toast(t.common.error, 'error') }
-    finally { setDeleting(false) }
+    await supabase.from('events').delete().eq('id', deleteId)
+    toast(t.common.success, 'success')
+    setDeleteId(null)
+    setDeleting(false)
+    load()
   }
 
-  const filters = [
-    ['', t.common.all],
-    ['upcoming', ev.upcoming],
-    ['ongoing',  ev.ongoing],
-    ['past',     ev.past],
-  ]
+  const filters = [['', t.common.all], ['upcoming', ev.upcoming], ['ongoing', ev.ongoing], ['past', ev.past]]
 
   return (
     <div className="space-y-5">
@@ -102,20 +93,20 @@ export default function EventsList() {
                 {events.map(e => {
                   const s = STATUS_MAP[e.status] || STATUS_MAP.upcoming
                   return (
-                    <tr key={e._id} className="table-row-hover">
+                    <tr key={e.id} className="table-row-hover">
                       <td className="px-6 py-3">
                         <p className="font-medium text-slate-800">{e.title}</p>
-                        <p className="text-slate-400 text-xs truncate max-w-xs">{e.description?.replace(/<[^>]+>/g,'').substring(0,60)}...</p>
+                        <p className="text-slate-400 text-xs truncate max-w-xs">{e.description?.substring(0,60)}...</p>
                       </td>
-                      <td className="px-4 py-3 text-slate-500 hidden md:table-cell whitespace-nowrap">{fmt(e.startDate, lang)}</td>
+                      <td className="px-4 py-3 text-slate-500 hidden md:table-cell whitespace-nowrap">{fmt(e.start_date, lang)}</td>
                       <td className="px-4 py-3 text-slate-500 hidden lg:table-cell">{e.location || '—'}</td>
                       <td className="px-4 py-3"><span className={`badge ${s.cls}`}>{s.label}</span></td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-1 justify-end">
-                          <Link to={`/events/${e._id}/edit`} className="btn btn-ghost btn-icon btn-sm text-slate-500 hover:text-navy-700">
+                          <Link to={`/events/${e.id}/edit`} className="btn btn-ghost btn-icon btn-sm text-slate-500 hover:text-navy-700">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                           </Link>
-                          <button onClick={() => setDeleteId(e._id)} className="btn btn-ghost btn-icon btn-sm text-slate-400 hover:text-red-600">
+                          <button onClick={() => setDeleteId(e.id)} className="btn btn-ghost btn-icon btn-sm text-slate-400 hover:text-red-600">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                           </button>
                         </div>
@@ -128,7 +119,6 @@ export default function EventsList() {
           </div>
         )}
       </div>
-
       <ConfirmDialog isOpen={!!deleteId} onClose={() => setDeleteId(null)} onConfirm={handleDelete} loading={deleting} title={ev.deleteTitle} message={ev.deleteMsg} />
     </div>
   )

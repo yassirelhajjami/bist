@@ -6,9 +6,5 @@ export default defineConfig({
   base: '/admin-panel/',
   server: {
     port: 5174,
-    proxy: {
-      '/api': { target: 'http://localhost:5000', changeOrigin: true },
-      '/uploads': { target: 'http://localhost:5000', changeOrigin: true },
-    },
   },
 })

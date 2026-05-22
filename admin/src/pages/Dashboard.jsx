@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import StatCard from '../components/UI/StatCard'
 import Spinner from '../components/UI/Spinner'
-import api from '../api/client'
+import { supabase } from '../lib/supabase'
 import { useLanguage } from '../context/LanguageContext'
 
 function fmt(date, lang) {
@@ -16,10 +16,40 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.get('/stats')
-      .then(r => setStats(r.data.data))
-      .catch(() => setStats({ counts: {}, recentPosts: [], recentEvents: [] }))
-      .finally(() => setLoading(false))
+    async function load() {
+      const [posts, gallery, events, staff, subs, unread, published, drafts, upcoming] = await Promise.all([
+        supabase.from('posts').select('*', { count: 'exact', head: true }),
+        supabase.from('gallery').select('*', { count: 'exact', head: true }),
+        supabase.from('events').select('*', { count: 'exact', head: true }),
+        supabase.from('staff').select('*', { count: 'exact', head: true }),
+        supabase.from('form_submissions').select('*', { count: 'exact', head: true }),
+        supabase.from('form_submissions').select('*', { count: 'exact', head: true }).eq('is_read', false),
+        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('status', 'published'),
+        supabase.from('posts').select('*', { count: 'exact', head: true }).eq('status', 'draft'),
+        supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'upcoming'),
+      ])
+      const [recentPostsRes, recentEventsRes] = await Promise.all([
+        supabase.from('posts').select('id,title,status,created_at').order('created_at', { ascending: false }).limit(5),
+        supabase.from('events').select('id,title,status,start_date').order('start_date', { ascending: false }).limit(5),
+      ])
+      setStats({
+        counts: {
+          posts: posts.count || 0,
+          gallery: gallery.count || 0,
+          events: events.count || 0,
+          staff: staff.count || 0,
+          submissions: subs.count || 0,
+          unreadSubmissions: unread.count || 0,
+          published: published.count || 0,
+          drafts: drafts.count || 0,
+          upcoming: upcoming.count || 0,
+        },
+        recentPosts: recentPostsRes.data || [],
+        recentEvents: recentEventsRes.data || [],
+      })
+      setLoading(false)
+    }
+    load().catch(() => { setStats({ counts: {}, recentPosts: [], recentEvents: [] }); setLoading(false) })
   }, [])
 
   if (loading) return <div className="flex items-center justify-center h-64"><Spinner size="lg" /></div>
@@ -108,10 +138,10 @@ export default function Dashboard() {
           </div>
           <div className="divide-y divide-slate-100">
             {recentPosts?.length ? recentPosts.map(p => (
-              <div key={p._id} className="px-6 py-3 flex items-center justify-between gap-3 hover:bg-slate-50">
+              <div key={p.id} className="px-6 py-3 flex items-center justify-between gap-3 hover:bg-slate-50">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-800 truncate">{p.title}</p>
-                  <p className="text-xs text-slate-400">{fmt(p.createdAt, lang)}</p>
+                  <p className="text-xs text-slate-400">{fmt(p.created_at, lang)}</p>
                 </div>
                 <span className={`badge ${statusClasses[p.status] || 'badge-gray'}`}>{statusLabels[p.status] || p.status}</span>
               </div>
@@ -126,10 +156,10 @@ export default function Dashboard() {
           </div>
           <div className="divide-y divide-slate-100">
             {recentEvents?.length ? recentEvents.map(ev => (
-              <div key={ev._id} className="px-6 py-3 flex items-center justify-between gap-3 hover:bg-slate-50">
+              <div key={ev.id} className="px-6 py-3 flex items-center justify-between gap-3 hover:bg-slate-50">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-slate-800 truncate">{ev.title}</p>
-                  <p className="text-xs text-slate-400">{fmt(ev.startDate, lang)}</p>
+                  <p className="text-xs text-slate-400">{fmt(ev.start_date, lang)}</p>
                 </div>
                 <span className={`badge ${eventStatus[ev.status] || 'badge-gray'}`}>{eventLabels[ev.status] || ev.status}</span>
               </div>

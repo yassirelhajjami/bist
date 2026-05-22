@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import api from '../../api/client'
+import { supabase } from '../../lib/supabase'
 import MediaUpload from '../../components/MediaUpload'
 import Spinner from '../../components/UI/Spinner'
 import { useToast } from '../../components/UI/Toast'
@@ -15,10 +15,8 @@ export default function AdmissionsEditor() {
   const [saving, setSaving]   = useState(false)
 
   useEffect(() => {
-    api.get('/content/admissions').then(r => {
-      const flat = {}
-      Object.entries(r.data.data).forEach(([k, v]) => { flat[k] = v.value })
-      setFields(flat)
+    supabase.from('page_content').select('key, value').eq('page', 'admissions').then(({ data }) => {
+      if (data) setFields(Object.fromEntries(data.map(r => [r.key, r.value])))
     }).finally(() => setLoading(false))
   }, [])
 
@@ -26,7 +24,9 @@ export default function AdmissionsEditor() {
     e.preventDefault()
     setSaving(true)
     try {
-      await api.patch('/content/admissions', fields)
+      const rows = Object.entries(fields).map(([key, value]) => ({ page: 'admissions', key, value }))
+      const { error } = await supabase.from('page_content').upsert(rows, { onConflict: 'page,key' })
+      if (error) throw error
       toast(t.common.success, 'success')
     } catch { toast(t.common.error, 'error') }
     finally { setSaving(false) }

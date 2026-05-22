@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 const COLORS = [
   { gradient: 'from-purple-400 to-indigo-500', categoryColor: 'bg-purple-100 text-purple-700' },
@@ -19,20 +20,17 @@ export default function News() {
   const [posts, setPosts] = useState([])
 
   useEffect(() => {
-    fetch('/api/posts?status=published&limit=4')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.data?.length) setPosts(data.data) })
+    supabase.from('posts').select('id,title,excerpt,cover_image,created_at').eq('status', 'published').order('created_at', { ascending: false }).limit(4)
+      .then(({ data }) => { if (data?.length) setPosts(data) })
       .catch(() => {})
   }, [])
 
-  // Fall back to i18n static articles if API returns nothing
   const articles = posts.length
     ? posts.map((p, i) => ({
-        title:    p.title,
-        excerpt:  p.excerpt || '',
-        category: p.category || '',
-        date:     fmtDate(p.publishDate || p.createdAt, lang),
-        coverImage: p.coverImage || null,
+        title:      p.title,
+        excerpt:    p.excerpt || '',
+        date:       fmtDate(p.created_at, lang),
+        coverImage: p.cover_image || null,
         ...COLORS[i % COLORS.length],
       }))
     : n.articles.map((a, i) => ({ ...a, ...COLORS[i % COLORS.length] }))
@@ -60,16 +58,12 @@ export default function News() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Featured */}
           <div className="reveal lg:col-span-2 card group overflow-hidden hover:-translate-y-1">
             {featured.coverImage ? (
               <img src={featured.coverImage} alt={featured.title} className="h-56 w-full object-cover" />
             ) : (
               <div className={`h-56 bg-gradient-to-br ${featured.gradient} relative overflow-hidden`}>
                 <div className="absolute inset-0 bg-navy-900/20 group-hover:bg-navy-900/10 transition-colors duration-300" />
-                <div className="absolute top-4 left-4">
-                  <span className={`inline-block text-xs font-semibold px-3 py-1 rounded-full ${featured.categoryColor}`}>{featured.category}</span>
-                </div>
                 <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5">
                   <p className="text-xs font-medium text-gray-600">{featured.date}</p>
                 </div>
@@ -78,7 +72,6 @@ export default function News() {
             <div className="p-6">
               {featured.coverImage && (
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full ${featured.categoryColor}`}>{featured.category}</span>
                   <span className="text-xs text-gray-400">{featured.date}</span>
                 </div>
               )}
@@ -93,7 +86,6 @@ export default function News() {
             </div>
           </div>
 
-          {/* Side cards */}
           <div className="flex flex-col gap-4">
             {rest.map((article, i) => (
               <div key={i} className="reveal card group overflow-hidden hover:-translate-y-0.5 flex gap-0 p-0" style={{ transitionDelay: `${i * 0.1}s` }}>
@@ -106,9 +98,6 @@ export default function News() {
                 )}
                 <div className="p-4 flex flex-col justify-between min-w-0">
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${article.categoryColor}`}>{article.category}</span>
-                    </div>
                     <h3 className="font-heading text-sm text-navy-900 leading-tight mb-1.5 group-hover:text-crimson-600 transition-colors line-clamp-2">{article.title}</h3>
                   </div>
                   <div className="flex items-center justify-between mt-2">

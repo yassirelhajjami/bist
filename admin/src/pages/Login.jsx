@@ -22,7 +22,7 @@ export default function Login() {
       await login(form.email, form.password)
       navigate('/')
     } catch (err) {
-      setError(err.response?.data?.message || l.error)
+      setError(err.message || l.error)
     } finally {
       setLoading(false)
     }

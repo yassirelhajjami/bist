@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useLanguage } from '../../context/LanguageContext'
-import api from '../../api/client'
+import { supabase } from '../../lib/supabase'
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuth()
@@ -11,10 +11,10 @@ export default function Sidebar({ isOpen, onClose }) {
   const [unread, setUnread] = useState(0)
 
   useEffect(() => {
-    api.get('/submissions/unread').then(r => setUnread(r.data.count || 0)).catch(() => {})
+    supabase.from('form_submissions').select('*', { count: 'exact', head: true }).eq('is_read', false)
+      .then(({ count }) => setUnread(count || 0))
+      .catch(() => {})
   }, [])
-
-  const isActive = (to, exact) => exact ? location.pathname === '/admin-panel' || location.pathname === '/' : location.pathname.startsWith(to)
 
   const navGroups = [
     {
@@ -34,11 +34,11 @@ export default function Sidebar({ isOpen, onClose }) {
     {
       label: t.nav.website,
       items: [
-        { label: t.nav.homepage,   to: '/homepage', icon: 'edit' },
+        { label: t.nav.homepage,   to: '/homepage',   icon: 'edit' },
         { label: t.nav.admissions, to: '/admissions', icon: 'admissions' },
-        { label: t.nav.about,      to: '/about',    icon: 'about' },
-        { label: t.nav.teaching,   to: '/teaching', icon: 'teaching' },
-        { label: t.nav.levels,     to: '/levels',   icon: 'levels' },
+        { label: t.nav.about,      to: '/about',      icon: 'about' },
+        { label: t.nav.teaching,   to: '/teaching',   icon: 'teaching' },
+        { label: t.nav.levels,     to: '/levels',     icon: 'levels' },
       ],
     },
     {
@@ -83,7 +83,6 @@ export default function Sidebar({ isOpen, onClose }) {
         transition-transform duration-300
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Logo */}
         <div className="px-5 py-5 border-b border-navy-800 flex items-center gap-3">
           <img src="/badrane.png" alt="Badrane" className="h-9 w-auto brightness-0 invert" />
           <div className="min-w-0">
@@ -94,7 +93,6 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
           {navGroups.map((group, gi) => (
             <div key={gi} className={gi > 0 ? 'pt-3' : ''}>
@@ -126,7 +124,6 @@ export default function Sidebar({ isOpen, onClose }) {
           ))}
         </nav>
 
-        {/* User footer */}
         <div className="px-3 py-4 border-t border-navy-800">
           <div className="flex items-center justify-between px-3 py-2 mb-2">
             <span className="text-navy-400 text-xs">{lang === 'ar' ? 'اللغة' : 'Langue'}</span>
@@ -140,11 +137,11 @@ export default function Sidebar({ isOpen, onClose }) {
 
           <div className="flex items-center gap-3 px-3 py-2 mb-2">
             <div className="w-8 h-8 bg-crimson-600 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-              {user?.name?.[0]?.toUpperCase()}
+              {user?.email?.[0]?.toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-white text-sm font-medium truncate">{user?.name}</p>
-              <p className="text-navy-400 text-xs truncate">{user?.role === 'admin' ? t.nav.admin : t.nav.editor}</p>
+              <p className="text-white text-sm font-medium truncate">{user?.email}</p>
+              <p className="text-navy-400 text-xs">{t.nav.admin}</p>
             </div>
           </div>
 

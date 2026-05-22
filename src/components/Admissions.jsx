@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 export default function Admissions() {
   const { t } = useLanguage()
@@ -16,20 +17,16 @@ export default function Admissions() {
     setSubmitting(true)
     setError('')
     try {
-      const res = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'registration',
-          name: `${form.prenom} ${form.nom}`.trim(),
-          email: form.email,
-          phone: form.telephone,
-          level: form.niveau,
-          message: form.message,
-          data: { nom: form.nom, prenom: form.prenom, email: form.email },
-        }),
+      const { error: err } = await supabase.from('form_submissions').insert({
+        type: 'registration',
+        name: `${form.prenom} ${form.nom}`.trim(),
+        email: form.email,
+        phone: form.telephone,
+        level: form.niveau,
+        message: form.message,
+        data: { nom: form.nom, prenom: form.prenom, email: form.email },
       })
-      if (!res.ok) throw new Error()
+      if (err) throw err
       setSubmitted(true)
     } catch {
       setError(a.submitError || 'Erreur lors de l\'envoi. Réessayez.')

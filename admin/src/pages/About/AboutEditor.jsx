@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import api from '../../api/client'
+import { supabase } from '../../lib/supabase'
 import Spinner from '../../components/UI/Spinner'
 import { useToast } from '../../components/UI/Toast'
 import { useLanguage } from '../../context/LanguageContext'
@@ -14,10 +14,8 @@ export default function AboutEditor() {
   const [saving, setSaving]   = useState(false)
 
   useEffect(() => {
-    api.get('/content/about').then(r => {
-      const flat = {}
-      Object.entries(r.data.data).forEach(([k, v]) => { flat[k] = v.value })
-      setFields(flat)
+    supabase.from('page_content').select('key, value').eq('page', 'about').then(({ data }) => {
+      if (data) setFields(Object.fromEntries(data.map(r => [r.key, r.value])))
     }).finally(() => setLoading(false))
   }, [])
 
@@ -25,7 +23,9 @@ export default function AboutEditor() {
     e.preventDefault()
     setSaving(true)
     try {
-      await api.patch('/content/about', fields)
+      const rows = Object.entries(fields).map(([key, value]) => ({ page: 'about', key, value }))
+      const { error } = await supabase.from('page_content').upsert(rows, { onConflict: 'page,key' })
+      if (error) throw error
       toast(t.common.success, 'success')
     } catch { toast(t.common.error, 'error') }
     finally { setSaving(false) }
