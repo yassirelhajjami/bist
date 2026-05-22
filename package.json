@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:vercel": "vite build && cd admin && npm ci && npm run build && cd .. && mkdir -p dist/admin-panel && cp -r admin/dist/. dist/admin-panel/",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
