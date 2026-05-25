@@ -1,33 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 
-const CAT_MAP = {
-  'Vie scolaire':  1,
-  'Activités':     2,
-  'Infrastructure':3,
-  'Événements':    4,
-  'Autre':         0,
-}
+const CATEGORIES = ['Vie scolaire', 'Activités', 'Infrastructure', 'Événements', 'Autre']
 
 export default function Gallery() {
   const { t } = useLanguage()
   const g = t.gallery
-  const [activeCategory, setActiveCategory] = useState(0)
+  const [activeCategory, setActiveCategory] = useState('all')
   const [images, setImages] = useState([])
   const [lightbox, setLightbox] = useState(null)
 
   useEffect(() => {
-    fetch('/api/gallery')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.data) setImages(data.data) })
+    supabase.from('gallery').select('*').order('created_at', { ascending: false })
+      .then(({ data }) => { if (data) setImages(data) })
       .catch(() => {})
   }, [])
 
-  const filtered = images.filter(img => {
-    if (activeCategory === 0) return true
-    const catIdx = CAT_MAP[img.category] ?? 0
-    return catIdx === activeCategory
-  })
+  const filtered = activeCategory === 'all'
+    ? images
+    : images.filter(img => img.category === activeCategory)
 
   return (
     <section id="galerie" className="section-padding bg-gray-50">
@@ -41,11 +33,13 @@ export default function Gallery() {
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-10 reveal">
-          {g.categories.map((cat, i) => (
-            <button key={i} onClick={() => setActiveCategory(i)}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                activeCategory === i ? 'bg-navy-900 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 shadow-sm'
-              }`}>
+          <button onClick={() => setActiveCategory('all')}
+            className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${activeCategory === 'all' ? 'bg-navy-900 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 shadow-sm'}`}>
+            {g.categories?.[0] || 'Tous'}
+          </button>
+          {CATEGORIES.map(cat => (
+            <button key={cat} onClick={() => setActiveCategory(cat)}
+              className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${activeCategory === cat ? 'bg-navy-900 text-white shadow-md' : 'bg-white text-gray-600 hover:bg-gray-100 shadow-sm'}`}>
               {cat}
             </button>
           ))}
@@ -66,14 +60,14 @@ export default function Gallery() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filtered.map((img, i) => (
               <button
-                key={img._id}
+                key={img.id}
                 onClick={() => setLightbox(img)}
                 className="group relative rounded-2xl overflow-hidden cursor-pointer"
                 style={{ minHeight: '192px', animation: `fadeUp 0.5s ease both`, animationDelay: `${i * 0.06}s` }}
               >
                 <img
-                  src={img.thumbnailUrl || img.url}
-                  alt={img.caption || img.originalName}
+                  src={img.thumbnail_url || img.url}
+                  alt={img.caption || ''}
                   className="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-navy-900/0 group-hover:bg-navy-900/40 transition-all duration-300" />
@@ -96,7 +90,7 @@ export default function Gallery() {
             <div className="relative max-w-3xl w-full" onClick={e => e.stopPropagation()}>
               <img
                 src={lightbox.url}
-                alt={lightbox.caption || lightbox.originalName}
+                alt={lightbox.caption || ''}
                 className="w-full max-h-[80vh] object-contain rounded-2xl"
               />
               {lightbox.caption && (

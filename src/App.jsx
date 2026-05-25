@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
@@ -10,8 +11,9 @@ import Gallery from './components/Gallery'
 import News from './components/News'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
+import NotFound from './components/NotFound'
 
-function App() {
+function HomePage() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -28,7 +30,6 @@ function App() {
   }, [])
 
   return (
-    <LanguageProvider>
     <div className="min-h-screen bg-white">
       <Navbar />
       <main>
@@ -43,6 +44,16 @@ function App() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </LanguageProvider>
   )
 }
