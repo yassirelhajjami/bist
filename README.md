@@ -1,76 +1,42 @@
-# Badrane International School — Full Stack
+# Badrane International School
 
 ## Structure
 
 ```
 bist/
-├── src/               # School website (React + Vite) — port 5173
-├── admin/             # Admin dashboard (React + Vite) — port 5174
-└── server/            # REST API (Node.js + Express + MongoDB) — port 5000
+├── src/       # School website (React + Vite)
+└── admin/     # Admin dashboard (React + Vite)
 ```
 
-## Getting started
+## Development
 
-### 1. Start MongoDB
-Make sure MongoDB is running locally on the default port (27017).
-
-### 2. Configure the server
+**School website** (port 5173):
 ```bash
-cd server
-cp .env.example .env   # already done
-# Edit .env and set your JWT_SECRET to a strong random string
-```
-
-### 3. Seed the database (first time only)
-```bash
-cd server
-npm run seed
-```
-Default credentials:
-- Email: `admin@badraneschool.ma`
-- Password: `Admin@2024!`
-
-**Change the password after first login!**
-
-### 4. Start all three services
-
-**Server (API):**
-```bash
-cd server
 npm run dev
 ```
 
-**School website:**
+**Admin panel** (port 5174):
 ```bash
-cd ..          # back to bist/
-npm run dev
+cd admin && npm run dev
 ```
 
-**Admin dashboard:**
-```bash
-cd admin
-npm run dev
+## Environment variables
+
+Both apps require a `.env` file:
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
 ```
 
-## URLs
-| Service       | URL                          |
-|---------------|------------------------------|
-| School site   | http://localhost:5173         |
-| Admin panel   | http://localhost:5174         |
-| API           | http://localhost:5000/api     |
-| Uploads       | http://localhost:5000/uploads |
+## Admin credentials
 
-## API Endpoints
-| Resource     | Endpoints                                    |
-|--------------|----------------------------------------------|
-| Auth         | POST /login · GET /me · PATCH /me/password   |
-| Posts        | GET · POST · PATCH /:id · DELETE /:id        |
-| Gallery      | GET · POST · PATCH /:id · DELETE /:id        |
-| Events       | GET · POST · PATCH /:id · DELETE /:id        |
-| Staff        | GET · POST · PATCH /:id · DELETE /:id        |
-| Content      | GET /:page · PATCH /:page                    |
-| Settings     | GET · PATCH                                  |
-| Stats        | GET /stats                                   |
-| Upload       | POST /upload/image                           |
+- Email: `contact@bist.ma`
+- Password: set in Supabase Auth dashboard
 
-All protected routes require `Authorization: Bearer <token>` header.
+## Deployment
+
+Deployed as a single Vercel project. The build command compiles both apps:
+- School website → `dist/`
+- Admin panel → `dist/admin-panel/`
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel environment variables.

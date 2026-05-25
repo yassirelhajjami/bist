@@ -84,7 +84,7 @@ export default function Sidebar({ isOpen, onClose }) {
         ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="px-5 py-5 border-b border-navy-800 flex items-center gap-3">
-          <img src="/badrane.png" alt="Badrane" className="h-9 w-auto brightness-0 invert" />
+          <img src="/icon.webp" alt="Badrane" className="h-9 w-auto" />
           <div className="min-w-0">
             <p className="text-white text-xs font-semibold leading-tight truncate">Badrane International</p>
             <p className="text-crimson-400 text-xs truncate">

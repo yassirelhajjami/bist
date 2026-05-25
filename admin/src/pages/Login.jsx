@@ -41,7 +41,7 @@ export default function Login() {
         <div className="bg-white rounded-3xl shadow-2xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <img src="/badrane.png" alt="Badrane" className="h-14 w-auto mx-auto mb-5" />
+            <img src="/icon.webp" alt="Badrane" className="h-14 w-auto mx-auto mb-5" />
             <h1 className="text-2xl font-bold text-slate-800">{l.title}</h1>
             <p className="text-slate-500 text-sm mt-1">{l.subtitle}</p>
           </div>
@@ -63,7 +63,7 @@ export default function Login() {
                 required
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                placeholder="admin@badraneschool.ma"
+                placeholder="contact@bist.ma"
                 className="form-input"
                 autoComplete="email"
               />
