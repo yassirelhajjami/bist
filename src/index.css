@@ -10,91 +10,90 @@
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
 
-  body {
-    @apply font-sans text-gray-800 antialiased;
-  }
+  body { @apply font-sans text-gray-800 antialiased; }
 
-  h1, h2, h3 {
-    @apply font-heading;
-  }
+  h1, h2, h3 { @apply font-heading; }
 
-  [lang="ar"] body, [dir="rtl"] body {
-    font-family: 'Cairo', sans-serif;
-  }
-
-  [lang="ar"] .font-heading,
-  [lang="ar"] h1, [lang="ar"] h2, [lang="ar"] h3,
-  [dir="rtl"] .font-heading,
-  [dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3 {
+  [lang="ar"] body, [dir="rtl"] body { font-family: 'Cairo', sans-serif; }
+  [lang="ar"] .font-heading, [lang="ar"] h1, [lang="ar"] h2, [lang="ar"] h3,
+  [dir="rtl"] .font-heading,  [dir="rtl"] h1,  [dir="rtl"] h2,  [dir="rtl"] h3 {
     font-family: 'Cairo', sans-serif;
     font-weight: 700;
   }
 }
 
 @layer utilities {
-  .section-padding {
-    @apply py-16 md:py-24;
-  }
-
-  .container-custom {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
+  .section-padding  { @apply py-20 md:py-28; }
+  .container-custom { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
 
   .btn-primary {
-    @apply inline-flex items-center gap-2 bg-crimson-600 hover:bg-crimson-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5;
+    @apply inline-flex items-center gap-2 bg-crimson-600 hover:bg-crimson-700 text-white
+           font-semibold px-7 py-3.5 rounded-full transition-all duration-300
+           shadow-md hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0;
   }
-
   .btn-secondary {
-    @apply inline-flex items-center gap-2 border-2 border-white text-white hover:bg-white hover:text-navy-900 font-semibold px-6 py-3 rounded-full transition-all duration-300;
+    @apply inline-flex items-center gap-2 border border-white/30 text-white
+           hover:bg-white hover:text-navy-900 font-semibold px-7 py-3.5
+           rounded-full transition-all duration-300 backdrop-blur-sm;
   }
-
   .btn-outline {
-    @apply inline-flex items-center gap-2 border-2 border-navy-700 text-navy-700 hover:bg-navy-700 hover:text-white font-semibold px-6 py-3 rounded-full transition-all duration-300;
+    @apply inline-flex items-center gap-2 border border-navy-200 text-navy-700
+           hover:bg-navy-900 hover:text-white hover:border-navy-900
+           font-semibold px-6 py-3 rounded-full transition-all duration-300;
   }
 
-  .section-title {
-    @apply font-heading text-3xl md:text-4xl lg:text-5xl text-navy-900 leading-tight;
-  }
-
-  .section-subtitle {
-    @apply text-lg text-gray-500 mt-4 max-w-2xl;
-  }
+  .section-title    { @apply font-heading text-3xl md:text-4xl lg:text-5xl text-navy-900 leading-tight; }
+  .section-subtitle { @apply text-lg text-gray-500 mt-4 max-w-2xl; }
 
   .card {
-    @apply bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300 overflow-hidden;
+    @apply bg-white rounded-2xl shadow-card hover:shadow-card-hover transition-all duration-300;
   }
 
+  /* Editorial badge — dash + label */
   .badge {
-    @apply inline-block bg-crimson-50 text-crimson-700 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide;
+    @apply inline-flex items-center gap-2.5 text-crimson-600 text-xs font-bold uppercase tracking-[0.2em];
+  }
+  .badge::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 2px;
+    background: currentColor;
+    flex-shrink: 0;
   }
 }
 
-/* Smooth scroll offset for fixed navbar */
-[id] {
-  scroll-margin-top: 80px;
+/* Thin crimson bar always at very top of the page */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: #cc2e2e;
+  z-index: 9999;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #132d79; border-radius: 3px; }
+[id] { scroll-margin-top: 84px; }
 
-/* Intersection observer animation */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cc2e2e; border-radius: 3px; }
+
+/* Reveal on scroll */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.7s ease, transform 0.7s ease;
+  transform: translateY(24px);
+  transition: opacity 0.65s ease, transform 0.65s ease;
 }
-.reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
+.reveal.visible { opacity: 1; transform: translateY(0); }
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
