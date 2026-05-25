@@ -105,10 +105,6 @@ export default function Footer() {
       <div className="border-t border-navy-800">
         <div className="container-custom py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-navy-400">
           <p>© {year} Badrane International School. {f.rights}.</p>
-          <div className="flex gap-5">
-            <a href="#" className="hover:text-crimson-400 transition-colors">{f.privacyPolicy}</a>
-            <a href="#" className="hover:text-crimson-400 transition-colors">{f.terms}</a>
-          </div>
         </div>
       </div>
     </footer>
