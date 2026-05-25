@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../../lib/supabase'
 import Spinner from '../../components/UI/Spinner'
 import { useToast } from '../../components/UI/Toast'
@@ -8,10 +8,12 @@ export default function HomepageEditor() {
   const toast = useToast()
   const { t } = useLanguage()
   const hp = t.homepage
+  const fileRef = useRef()
 
-  const [fields, setFields] = useState({})
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving]   = useState(false)
+  const [fields, setFields]       = useState({})
+  const [loading, setLoading]     = useState(true)
+  const [saving, setSaving]       = useState(false)
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     supabase.from('page_content').select('key, value').eq('page', 'homepage').then(({ data }) => {
@@ -29,6 +31,38 @@ export default function HomepageEditor() {
       toast(t.common.success, 'success')
     } catch { toast(t.common.error, 'error') }
     finally { setSaving(false) }
+  }
+
+  async function uploadBgImage(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `hero-bg/${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('media').upload(path, file, { upsert: true })
+      if (upErr) throw upErr
+      const { data: { publicUrl } } = supabase.storage.from('media').getPublicUrl(path)
+      const newFields = { ...fields, hero_bg_image: publicUrl }
+      setFields(newFields)
+      const { error: dbErr } = await supabase.from('page_content').upsert(
+        [{ page: 'homepage', key: 'hero_bg_image', value: publicUrl }],
+        { onConflict: 'page,key' }
+      )
+      if (dbErr) throw dbErr
+      toast(t.common.success, 'success')
+    } catch { toast(t.common.error, 'error') }
+    finally { setUploading(false); if (fileRef.current) fileRef.current.value = '' }
+  }
+
+  async function removeBgImage() {
+    const newFields = { ...fields, hero_bg_image: '' }
+    setFields(newFields)
+    await supabase.from('page_content').upsert(
+      [{ page: 'homepage', key: 'hero_bg_image', value: '' }],
+      { onConflict: 'page,key' }
+    )
+    toast(t.common.success, 'success')
   }
 
   function set(k) { return e => setFields(f => ({ ...f, [k]: e.target.value })) }
@@ -60,9 +94,47 @@ export default function HomepageEditor() {
       </div>
 
       <Section num="1" title={hp.heroSection}>
+        {/* Hero background image */}
+        <div>
+          <label className="form-label">Image de fond du Hero</label>
+          {fields.hero_bg_image ? (
+            <div className="relative rounded-xl overflow-hidden mb-3" style={{ height: 180 }}>
+              <img src={fields.hero_bg_image} alt="Hero background" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-navy-950/60 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={removeBgImage}
+                  className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Supprimer l'image
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center mb-3" style={{ height: 120 }}>
+              <p className="text-slate-400 text-sm">Aucune image — dégradé par défaut affiché</p>
+            </div>
+          )}
+          <label className={`btn btn-secondary cursor-pointer ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
+            {uploading ? <Spinner size="sm" /> : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                {fields.hero_bg_image ? 'Changer l\'image' : 'Ajouter une image de fond'}
+              </>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={uploadBgImage} />
+          </label>
+        </div>
+
         <div>
           <label className="form-label">{hp.heroTitle}</label>
-          <input value={fields.hero_title || ''} onChange={set('hero_title')} className="form-input" />
+          <input value={fields.hero_title || ''} onChange={set('hero_title')} className="form-input" placeholder="L'Excellence Internationale à Tanger" />
+          <p className="text-xs text-slate-400 mt-1">Laissez vide pour utiliser le titre par défaut avec mise en forme</p>
         </div>
         <div>
           <label className="form-label">{hp.heroSubtitle}</label>

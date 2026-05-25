@@ -1,26 +1,36 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 export default function Hero() {
   const { t } = useLanguage()
   const h = t.hero
-  const [apiStats, setApiStats] = useState(null)
+  const [content, setContent] = useState({})
 
   useEffect(() => {
-    fetch('/api/content/homepage')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.data) setApiStats(data.data) })
+    supabase.from('page_content').select('key, value').eq('page', 'homepage')
+      .then(({ data }) => { if (data) setContent(Object.fromEntries(data.map(r => [r.key, r.value]))) })
       .catch(() => {})
   }, [])
 
-  // Use API values for the editable stats; fall back to i18n defaults
-  const stat1Value = apiStats?.stat_levels?.value   || h.stat1Value
-  const stat2Value = apiStats?.stat_years?.value    || h.stat2Value
-  const stat3Value = apiStats?.stat_students?.value || h.stat3Value
+  const stat1Value = content.stat_levels   || h.stat1Value
+  const stat2Value = content.stat_years    || h.stat2Value
+  const stat3Value = content.stat_students || h.stat3Value
+  const bgImage    = content.hero_bg_image
+  const heroTitle  = content.hero_title
+  const heroSub    = content.hero_subtitle
 
   return (
     <section id="accueil" className="relative min-h-screen flex items-center overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800" />
+      {/* Background */}
+      {bgImage ? (
+        <div className="absolute inset-0">
+          <img src={bgImage} alt="" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-navy-950/65" />
+        </div>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-navy-950 via-navy-900 to-navy-800" />
+      )}
 
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-crimson-600/10 blur-3xl" />
@@ -47,16 +57,22 @@ export default function Hero() {
 
       <div className="container-custom relative z-10 pt-28 pb-20">
         <div className="max-w-3xl">
-          <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6 animate-[fadeUp_0.6s_ease_0.3s_both]">
-            {h.title1}<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-crimson-300 to-crimson-500">
-              {h.title2}
-            </span>
-            <br />{h.title3}
-          </h1>
+          {heroTitle ? (
+            <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6 animate-[fadeUp_0.6s_ease_0.3s_both]">
+              {heroTitle}
+            </h1>
+          ) : (
+            <h1 className="font-heading text-5xl md:text-6xl lg:text-7xl text-white leading-tight mb-6 animate-[fadeUp_0.6s_ease_0.3s_both]">
+              {h.title1}<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-crimson-300 to-crimson-500">
+                {h.title2}
+              </span>
+              <br />{h.title3}
+            </h1>
+          )}
 
           <p className="text-lg md:text-xl text-white/70 leading-relaxed mb-10 max-w-2xl animate-[fadeUp_0.6s_ease_0.4s_both]">
-            {h.subtitle}
+            {heroSub || h.subtitle}
           </p>
 
           <div className="flex flex-wrap gap-4 animate-[fadeUp_0.6s_ease_0.5s_both]">
@@ -64,14 +80,14 @@ export default function Hero() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {h.cta1}
+              {content.hero_cta_primary || h.cta1}
             </a>
             <a href="#apropos" className="btn-secondary text-base px-8 py-4">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              {h.cta2}
+              {content.hero_cta_secondary || h.cta2}
             </a>
           </div>
 

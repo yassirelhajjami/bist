@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
 
 export default function Navbar() {
@@ -37,12 +38,12 @@ export default function Navbar() {
     >
       <div className="container-custom flex items-center justify-between">
         {/* Logo */}
-        <a href="#accueil" onClick={() => handleClick('#accueil')} className="flex items-center gap-3 group">
+        <Link to="/" onClick={() => { handleClick('#accueil'); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="flex items-center gap-3 group">
           <img src="/icon.webp" alt="Badrane International School" className="h-10 w-auto object-contain" />
           <span className={`hidden sm:block font-heading font-bold text-base leading-tight transition-colors duration-300 ${scrolled ? 'text-navy-900' : 'text-white'}`}>
             Badrane<br />International School
           </span>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-1">

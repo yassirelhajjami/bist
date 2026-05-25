@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 
@@ -39,12 +40,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
           <div className="lg:col-span-2">
-            <div className="flex items-center gap-3 mb-5">
+            <Link to="/" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-3 mb-5 hover:opacity-90 transition-opacity">
               <img src="/icon.webp" alt="Badrane International School" className="h-12 w-auto object-contain" />
               <span className="font-heading font-bold text-lg leading-tight text-white">
                 Badrane<br />International School
               </span>
-            </div>
+            </Link>
             <p className="text-navy-200 leading-relaxed mb-6 max-w-sm">{f.desc}</p>
             <div className="flex gap-3">
               {socials.map((s) => (
