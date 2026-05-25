@@ -1,42 +1,15 @@
-# Badrane International School
+# Badrane International School — Tanger
 
-## Structure
+Official website and administration panel for **Badrane International School**, Tanger, Morocco.
 
-```
-bist/
-├── src/       # School website (React + Vite)
-└── admin/     # Admin dashboard (React + Vite)
-```
+---
 
-## Development
+## License
 
-**School website** (port 5173):
-```bash
-npm run dev
-```
+**All Rights Reserved.**
 
-**Admin panel** (port 5174):
-```bash
-cd admin && npm run dev
-```
+This source code is the exclusive property of Badrane International School. No part of this codebase may be copied, modified, distributed, sublicensed, or used — in whole or in part — by any individual or organization outside of Badrane International School, without explicit written permission from the school's administration.
 
-## Environment variables
+Unauthorized use is strictly prohibited.
 
-Both apps require a `.env` file:
-```
-VITE_SUPABASE_URL=...
-VITE_SUPABASE_ANON_KEY=...
-```
-
-## Admin credentials
-
-- Email: `contact@bist.ma`
-- Password: set in Supabase Auth dashboard
-
-## Deployment
-
-Deployed as a single Vercel project. The build command compiles both apps:
-- School website → `dist/`
-- Admin panel → `dist/admin-panel/`
-
-Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel environment variables.
+© Badrane International School, Tanger — All rights reserved.
