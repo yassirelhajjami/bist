@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 const levelConfig = [
   { id: 'maternelle', color: 'from-amber-400 to-orange-400',    accent: 'text-amber-600',   badge: 'bg-amber-100 text-amber-700',
@@ -15,16 +16,15 @@ const levelConfig = [
 export default function Levels() {
   const { t } = useLanguage()
   const l = t.levels
-  const [content, setContent] = useState(null)
+  const [content, setContent] = useState({})
 
   useEffect(() => {
-    fetch('/api/content/levels')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.data) setContent(d.data) })
+    supabase.from('page_content').select('key, value').eq('page', 'levels')
+      .then(({ data }) => { if (data) setContent(Object.fromEntries(data.map(r => [r.key, r.value]))) })
       .catch(() => {})
   }, [])
 
-  const c = content || {}
+  const c = content
   const subtitle = c.section_subtitle || l.subtitle
   const levelIds = ['maternelle', 'primaire', 'college', 'lycee']
   const apiLevels = levelIds.map((id, i) => ({

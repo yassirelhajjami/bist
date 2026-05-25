@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 const methodIcons = [
   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>,
@@ -13,16 +14,15 @@ const methodIcons = [
 export default function Teaching() {
   const { t } = useLanguage()
   const p = t.pedagogy
-  const [content, setContent] = useState(null)
+  const [content, setContent] = useState({})
 
   useEffect(() => {
-    fetch('/api/content/teaching')
-      .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.data) setContent(d.data) })
+    supabase.from('page_content').select('key, value').eq('page', 'teaching')
+      .then(({ data }) => { if (data) setContent(Object.fromEntries(data.map(r => [r.key, r.value]))) })
       .catch(() => {})
   }, [])
 
-  const c = content || {}
+  const c = content
   const p1 = c.p1 || p.p1
   const p2 = c.p2 || p.p2
   const quote = c.quote || p.quote

@@ -1,14 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '../context/LanguageContext'
 import { supabase } from '../lib/supabase'
 
 export default function Admissions() {
   const { t } = useLanguage()
   const a = t.admissions
+  const [content, setContent] = useState({})
   const [form, setForm] = useState({ nom: '', prenom: '', email: '', telephone: '', niveau: '', message: '' })
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    supabase.from('page_content').select('key, value').eq('page', 'admissions')
+      .then(({ data }) => { if (data) setContent(Object.fromEntries(data.map(r => [r.key, r.value]))) })
+      .catch(() => {})
+  }, [])
+
+  const c = content
+  const subtitle = c.subtitle || a.subtitle
+
+  const steps = [1, 2, 3, 4].map((n, i) => ({
+    title: c[`step_${n}_title`] || a.steps[i]?.title,
+    desc:  c[`step_${n}_desc`]  || a.steps[i]?.desc,
+  }))
+
+  const docs = [1, 2, 3, 4, 5, 6].map((n, i) =>
+    c[`doc_${n}`] || a.docs[i]
+  ).filter(Boolean)
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
 
@@ -29,7 +48,7 @@ export default function Admissions() {
       if (err) throw err
       setSubmitted(true)
     } catch {
-      setError(a.submitError || 'Erreur lors de l\'envoi. Réessayez.')
+      setError(a.submitError || "Erreur lors de l'envoi. Réessayez.")
     } finally {
       setSubmitting(false)
     }
@@ -46,9 +65,9 @@ export default function Admissions() {
         <div className="text-center mb-14 reveal">
           <span className="inline-block bg-crimson-900/50 text-crimson-300 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide mb-4">{a.badge}</span>
           <h2 className="font-heading text-4xl md:text-5xl text-white mb-4">
-            {a.title} <em className="not-italic text-crimson-400">{a.titleEm}</em>
+            {c.section_title || a.title} <em className="not-italic text-crimson-400">{a.titleEm}</em>
           </h2>
-          <p className="text-navy-300 max-w-xl mx-auto">{a.subtitle}</p>
+          <p className="text-navy-300 max-w-xl mx-auto">{subtitle}</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-10">
@@ -56,11 +75,11 @@ export default function Admissions() {
             <div className="reveal">
               <h3 className="font-heading text-xl text-white mb-6">{a.stepsTitle}</h3>
               <div className="space-y-5">
-                {a.steps.map((step, i) => (
+                {steps.map((step, i) => (
                   <div key={i} className="flex gap-4">
                     <div className="flex flex-col items-center">
                       <div className="w-10 h-10 bg-crimson-600 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{i + 1}</div>
-                      {i < a.steps.length - 1 && <div className="w-0.5 h-8 bg-navy-700 mt-1" />}
+                      {i < steps.length - 1 && <div className="w-0.5 h-8 bg-navy-700 mt-1" />}
                     </div>
                     <div className="pb-1">
                       <h4 className="font-semibold text-white text-sm mb-1">{step.title}</h4>
@@ -74,7 +93,7 @@ export default function Admissions() {
             <div className="reveal bg-navy-900/50 border border-navy-700 rounded-2xl p-6">
               <h3 className="font-heading text-lg text-white mb-4">{a.docsTitle}</h3>
               <ul className="space-y-2.5">
-                {a.docs.map((doc, i) => (
+                {docs.map((doc, i) => (
                   <li key={i} className="flex items-center gap-3 text-sm text-navy-300">
                     <svg className="w-4 h-4 text-crimson-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
