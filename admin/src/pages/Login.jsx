@@ -63,7 +63,7 @@ export default function Login() {
                 required
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                placeholder=""
+                placeholder="admin@bist.ma"
                 className="form-input"
                 autoComplete="email"
               />
